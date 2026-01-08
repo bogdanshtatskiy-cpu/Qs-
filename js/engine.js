@@ -1,28 +1,26 @@
 const Game = {
-    // --- СОСТОЯНИЕ ---
     state: {
         hero: {
             name: "Безымянный",
             class: "Бродяга",
-            lvl: 1,
-            exp: 0,
-            maxExp: 100, // Нужно опыта для уровня
+            lvl: 1, exp: 0, maxExp: 100,
             hp: 100, maxHp: 100,
             stats: { strength: 5, agility: 5, intellect: 5, charisma: 5 },
             inventory: [],
             reputation: {}
         },
-        story: { chapter: "prologue", sceneId: "intro_01", history: [] },
+        story: { chapter: "prologue", sceneId: "intro_01" },
         flags: {}
     },
     scenes: {},
     loc: { stats: { strength: "Сила", agility: "Ловкость", intellect: "Интеллект", charisma: "Харизма" } },
-    config: { textSpeed: 20 },
+    config: { textSpeed: 15 }, // Чуть ускорил текст
+    typingTimer: null,
 
-    // --- СИСТЕМА UI ---
+    // --- UI СИСТЕМА ---
     ui: {
         openModal: function(id) {
-            Game.updateUI(); // Обновить данные перед открытием
+            Game.updateUI();
             document.getElementById('modal-overlay').classList.remove('hidden');
             document.getElementById(id).classList.remove('hidden');
         },
@@ -36,32 +34,49 @@ const Game = {
             el.className = 'toast';
             el.innerText = msg;
             container.appendChild(el);
-            setTimeout(() => {
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 500);
-            }, 3000);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 3000);
+        },
+        // АВТО-СКРОЛЛ: Самая важная функция
+        scrollToBottom: function() {
+            const main = document.querySelector('.main-content');
+            // Прокручиваем контейнер вниз
+            main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
+            // На всякий случай скроллим и всё тело документа (для мобилок)
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
     },
 
-    // --- ЗАПУСК ---
     init: function() {
         this.loadProgress();
         this.updateUI();
         this.renderScene(this.state.story.sceneId);
     },
 
-    // --- ДВИЖОК СЦЕН ---
     renderScene: function(sceneId) {
-        if (!this.scenes[sceneId]) { this.renderWIP(); return; }
+        // 1. ПРОВЕРКА НАЛИЧИЯ СЦЕНЫ
+        if (!this.scenes[sceneId]) { 
+            this.renderWIP(); 
+            return; 
+        }
+
         const scene = this.scenes[sceneId];
         
-        // Лог
+        // Очистка таймеров
+        if (this.typingTimer) clearTimeout(this.typingTimer);
+
         const output = document.getElementById("current-scene");
         const log = document.getElementById("story-log");
+        const choicesDiv = document.getElementById("choices-container");
+
+        // 2. ПЕРЕНОС СТАРОГО ТЕКСТА В ЛОГ
         if (output.innerHTML && this.state.story.sceneId !== sceneId) {
             const entry = document.createElement("div");
+            entry.className = "log-entry"; // Добавь класс в CSS если хочешь стилизовать
             entry.innerHTML = output.innerHTML;
-            entry.style.marginBottom = "15px";
+            entry.style.marginBottom = "20px";
+            entry.style.opacity = "0.6";
+            entry.style.borderBottom = "1px solid #333";
+            entry.style.paddingBottom = "15px";
             log.appendChild(entry);
         }
 
@@ -70,16 +85,25 @@ const Game = {
 
         if (scene.actions) scene.actions.forEach(act => this.executeAction(act));
 
-        // Печать текста
+        // 3. ПОДГОТОВКА НОВОГО ТЕКСТА
         let rawText = scene.text.replace(/{name}/g, this.state.hero.name);
         output.innerHTML = ""; 
         output.classList.add("typing-cursor");
-        document.getElementById("choices-container").innerHTML = "";
+        choicesDiv.innerHTML = ""; // Очищаем кнопки сразу
+        choicesDiv.style.opacity = "0";
+
+        // Скроллим сразу, чтобы подготовить место
+        this.ui.scrollToBottom();
 
         this.typeWriter(output, rawText, 0, () => {
             output.classList.remove("typing-cursor");
+            choicesDiv.style.opacity = "1";
+            
             if (scene.type === "input") this.renderInput(scene);
             else this.renderChoices(scene);
+            
+            // Скроллим еще раз, когда появились кнопки
+            setTimeout(() => this.ui.scrollToBottom(), 100); 
         });
     },
 
@@ -93,13 +117,17 @@ const Game = {
                 this.typeWriter(element, text, i, callback);
             } else {
                 element.innerHTML += text.charAt(i++);
-                setTimeout(() => this.typeWriter(element, text, i, callback), this.config.textSpeed);
+                // Каждые 50 символов подкручиваем скролл, если текст длинный
+                if (i % 50 === 0) this.ui.scrollToBottom(); 
+                this.typingTimer = setTimeout(() => this.typeWriter(element, text, i, callback), this.config.textSpeed);
             }
         } else if (callback) callback();
     },
 
     renderChoices: function(scene) {
         const container = document.getElementById("choices-container");
+        container.innerHTML = ""; // ЗАЩИТА ОТ ДУБЛИРОВАНИЯ
+        
         if (!scene.choices) return;
 
         scene.choices.forEach(choice => {
@@ -131,9 +159,12 @@ const Game = {
 
     renderInput: function(scene) {
         const container = document.getElementById("choices-container");
+        container.innerHTML = "";
+        
         const input = document.createElement("input");
         input.placeholder = "Введите имя...";
         input.style.padding = "15px"; input.style.width="100%"; input.style.background="#333"; input.style.color="#fff";
+        input.style.marginBottom = "10px";
         
         const btn = document.createElement("button");
         btn.innerText = "Подтвердить";
@@ -147,15 +178,26 @@ const Game = {
         container.appendChild(input); container.appendChild(btn);
     },
 
+    // ИСПРАВЛЕННЫЙ RENDER WIP
     renderWIP: function() {
-        document.getElementById("current-scene").innerHTML = "<i>Летописи пока молчат... (Конец текущего контента)</i>";
+        const output = document.getElementById("current-scene");
+        const choicesDiv = document.getElementById("choices-container");
+        
+        // Не пишем в лог, просто меняем текущий текст
+        output.innerHTML = "<br><br><div style='text-align:center; color:#888; border:1px dashed #444; padding:20px;'>📜<br>На этом свитки летописцев пока чисты.<br>История продолжится в следующих обновлениях.</div>";
+        
+        choicesDiv.innerHTML = ""; // Очищаем контейнер, чтобы кнопки не копились
+        
         const btn = document.createElement("button");
-        btn.innerText = "Перезагрузить";
+        btn.innerText = "⟳ Начать путешествие заново";
+        btn.style.marginTop = "20px";
+        btn.classList.add("danger-btn");
         btn.onclick = () => this.resetGame();
-        document.getElementById("choices-container").appendChild(btn);
+        
+        choicesDiv.appendChild(btn);
+        this.ui.scrollToBottom();
     },
 
-    // --- ЛОГИКА ---
     executeAction: function(act) {
         if (act.type === "addItem" && !this.state.hero.inventory.includes(act.item)) {
             this.state.hero.inventory.push(act.item);
@@ -169,28 +211,26 @@ const Game = {
         }
         if (act.type === "damage") {
             this.state.hero.hp = Math.max(0, this.state.hero.hp - act.val);
-            this.ui.showToast(`Получен урон: ${act.val}`);
+            this.ui.showToast(`💔 Урон: -${act.val}`);
         }
-        if (act.type === "xp") { // Новая механика опыта
-            this.gainExp(act.val);
-        }
+        if (act.type === "xp") this.gainExp(act.val);
         this.updateUI();
     },
 
     gainExp: function(amount) {
         this.state.hero.exp += amount;
-        this.ui.showToast(`Опыт: +${amount}`);
+        this.ui.showToast(`✨ Опыт: +${amount}`);
         if (this.state.hero.exp >= this.state.hero.maxExp) {
             this.state.hero.lvl++;
             this.state.hero.exp -= this.state.hero.maxExp;
             this.state.hero.maxExp = Math.floor(this.state.hero.maxExp * 1.5);
-            this.state.hero.maxHp += 10;
+            this.state.hero.maxHp += 15;
             this.state.hero.hp = this.state.hero.maxHp;
-            this.ui.showToast(`🎉 НОВЫЙ УРОВЕНЬ: ${this.state.hero.lvl}!`);
-            alert("Вы получили новый уровень! Характеристики повышены.");
-            // Тут можно добавить логику очков навыков
-            this.state.hero.stats.strength++; // Пока просто апаем все понемногу
+            // Бонус к статам рандомно или все +1
+            this.state.hero.stats.strength++;
             this.state.hero.stats.agility++;
+            this.state.hero.stats.intellect++;
+            alert(`🎉 УРОВЕНЬ ПОВЫШЕН! \nТеперь вы уровень ${this.state.hero.lvl}.\nВсе характеристики +1.`);
         }
     },
 
@@ -207,12 +247,9 @@ const Game = {
         document.getElementById("char-name").innerText = h.name;
         document.getElementById("char-lvl").innerText = h.lvl;
         document.getElementById("modal-class").innerText = h.class;
-        
-        // Бары
         document.getElementById("hp-fill").style.width = (h.hp / h.maxHp * 100) + "%";
         document.getElementById("exp-fill").style.width = (h.exp / h.maxExp * 100) + "%";
 
-        // Статы (В модальном окне)
         const sList = document.getElementById("stats-list");
         sList.innerHTML = "";
         for (let [key, val] of Object.entries(h.stats)) {
@@ -220,27 +257,21 @@ const Game = {
             sList.innerHTML += `<li><span>${ruName}</span> <b>${val}</b></li>`;
         }
 
-        // Инвентарь (В модальном окне)
         const iList = document.getElementById("inventory-list");
         iList.innerHTML = "";
         if (h.inventory.length === 0) iList.innerHTML = "<li style='opacity:0.5; text-align:center'>Пусто</li>";
         else h.inventory.forEach(i => iList.innerHTML += `<li>${i}</li>`);
 
-        // Репутация
         const fList = document.getElementById("factions-list");
         fList.innerHTML = "";
-        for (let [k, v] of Object.entries(h.reputation)) {
+        if (Object.keys(h.reputation).length === 0) fList.innerHTML = "<li style='opacity:0.5; text-align:center'>Вас никто не знает</li>";
+        else for (let [k, v] of Object.entries(h.reputation)) {
             let color = v > 0 ? "#27ae60" : "#c0392b";
             fList.innerHTML += `<li style="display:flex; justify-content:space-between; padding:5px 0;"><span>${k}</span> <span style="color:${color}">${v}</span></li>`;
         }
     },
 
     saveProgress: function() { localStorage.setItem("rpg_save_v4", JSON.stringify(this.state)); },
-    loadProgress: function() { 
-        const data = localStorage.getItem("rpg_save_v4"); 
-        if (data) this.state = JSON.parse(data); 
-    },
-    resetGame: function() {
-        if (confirm("Начать заново?")) { localStorage.removeItem("rpg_save_v4"); location.reload(); }
-    }
+    loadProgress: function() { const d = localStorage.getItem("rpg_save_v4"); if (d) this.state = JSON.parse(d); },
+    resetGame: function() { if (confirm("Точно сбросить?")) { localStorage.removeItem("rpg_save_v4"); location.reload(); } }
 };
