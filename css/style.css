@@ -1,131 +1,135 @@
 :root {
-    --bg-color: #0d0d0d;
-    --panel-bg: #1a1a1a;
-    --text-color: #bfbdae;
-    --accent-color: #8a2be2; /* Цвет метки (фиолетовый) */
-    --blood: #8a0b0b;
-    --highlight: #e0d0b0;
-    --border: #3d3d3d;
-    --font-main: 'Courier New', Courier, monospace; /* Стиль печатной машинки/терминала */
+    --bg-color: #111;
+    --panel-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --accent-color: #8a2be2; /* Магический фиолетовый для акцентов */
+    --button-bg: #2d2d2d;
+    --button-hover: #444;
+    --border-color: #555;
+    --font-main: 'Verdana', sans-serif; /* Более читаемый шрифт */
+    --font-header: 'Georgia', serif;
 }
 
 body {
-    background: var(--bg-color);
+    background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-main);
     margin: 0;
     height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
 }
 
-/* МОБИЛЬНЫЕ ТАБЫ */
-.mobile-nav { display: none; }
-
-/* СЕТКА ПК */
 .game-container {
     display: grid;
-    grid-template-columns: 280px 1fr 280px;
-    height: 100vh;
-    gap: 1px;
-    background: var(--border);
+    grid-template-columns: 300px 1fr 300px; /* Расширил боковые панели */
+    width: 98%;
+    height: 95vh;
+    gap: 10px;
+    background: #181818;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 0 30px rgba(0,0,0,0.9);
 }
 
-.sidebar, .main-content {
+.sidebar {
     background: var(--panel-bg);
-    padding: 15px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
     overflow-y: auto;
+    font-size: 0.9em;
+}
+
+.panel-header {
+    font-family: var(--font-header);
+    font-size: 1.4em;
+    border-bottom: 2px solid var(--accent-color);
+    margin-bottom: 15px;
+    color: #fff;
+    text-align: center;
 }
 
 .main-content {
     display: flex;
     flex-direction: column;
-    background: url('https://www.transparenttextures.com/patterns/black-felt.png'), #141414;
+    padding: 30px;
+    background: #141414;
+    border-left: 2px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
+    position: relative;
 }
 
-/* ТЕКСТ */
 #story-log {
     flex-grow: 1;
     overflow-y: auto;
     margin-bottom: 20px;
-    font-size: 0.9em;
-    color: #666;
-    border-bottom: 1px dashed var(--border);
+    padding-right: 15px;
+    color: #aaa; /* Старый текст серее */
+    font-style: italic;
+    border-bottom: 1px solid #333;
 }
-
-.log-entry { margin-bottom: 15px; border-left: 2px solid #333; padding-left: 10px; }
 
 #current-scene {
-    font-size: 1.1em;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    color: var(--highlight);
-    min-height: 80px;
+    min-height: 150px;
+    font-size: 1.2em; /* Крупный текст */
+    line-height: 1.8;
+    margin-bottom: 30px;
+    color: #fff;
+    white-space: pre-line; /* Сохраняет абзацы */
 }
 
-/* КНОПКИ */
-#choices-container { display: flex; flex-direction: column; gap: 8px; }
+/* --- Ввод имени --- */
+.input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#player-input {
+    flex-grow: 1;
+    padding: 15px;
+    background: #000;
+    color: #fff;
+    border: 1px solid var(--accent-color);
+    font-size: 1.1em;
+}
+
+/* --- Кнопки --- */
+#choices-container {
+    display: grid;
+    gap: 12px;
+}
 
 button {
-    background: #222;
-    border: 1px solid var(--border);
-    color: var(--text-color);
-    padding: 12px;
-    font-family: inherit;
-    font-size: 1em;
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+    color: #fff; /* Ярко-белый текст */
+    padding: 18px;
+    font-size: 1.1em;
     cursor: pointer;
     text-align: left;
     transition: 0.2s;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-button:hover { background: #333; border-color: var(--highlight); color: #fff; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.danger-btn { color: var(--blood); border-color: var(--blood); }
-.danger-btn:hover { background: var(--blood); color: white; }
-
-/* СТАТЫ */
-.stat-row { margin: 5px 0; font-size: 0.9em; }
-.bar-bg { background: #333; height: 8px; width: 100%; margin-top: 2px; }
-#hp-fill { background: var(--blood); height: 100%; transition: width 0.3s; }
-
-/* МОДАЛКА */
-.modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.95);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 100;
+button:hover {
+    background: var(--button-hover);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
 }
-.modal-content { 
-    background: #1a1a1a; padding: 20px; border: 2px solid var(--blood); 
-    max-width: 500px; width: 90%; text-align: center;
-}
-input { 
-    background: #000; border: 1px solid #555; color: #fff; 
-    padding: 10px; width: 80%; margin: 10px 0; font-family: inherit;
-}
-.class-btn { width: 100%; margin: 5px 0; text-align: center; }
-.class-btn.selected { border-color: var(--accent-color); background: #2a1a3a; }
 
-/* --- МОБИЛЬНАЯ АДАПТАЦИЯ --- */
-@media (max-width: 768px) {
-    .game-container { display: block; height: calc(100vh - 50px); }
-    
-    .mobile-nav {
-        height: 50px; background: #000; display: flex;
-        border-bottom: 1px solid var(--border);
-    }
-    .mobile-nav button {
-        flex: 1; border: none; background: transparent; text-align: center;
-        border-bottom: 3px solid transparent;
-    }
-    .mobile-nav button.active-tab { border-bottom-color: var(--accent-color); color: white; }
-
-    .sidebar, .main-content {
-        height: 100%; display: none; /* Скрываем все */
-        border: none;
-    }
-    /* Показываем активный таб через JS класс */
-    .active-panel { display: block !important; display: flex !important; }
-    
-    #story-log { max-height: 40vh; }
+button:active {
+    transform: translateY(0);
 }
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* UI Элементы */
+.health-bar { background: #333; height: 15px; margin-top: 5px; border: 1px solid #fff; }
+#hp-fill { background: #b30000; height: 100%; width: 100%; transition: width 0.3s; }
