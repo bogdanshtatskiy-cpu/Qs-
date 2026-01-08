@@ -1,4 +1,5 @@
 const Game = {
+    // --- СОСТОЯНИЕ ИГРЫ ---
     state: {
         hero: {
             name: "Безымянный",
@@ -14,7 +15,7 @@ const Game = {
     },
     scenes: {},
     loc: { stats: { strength: "Сила", agility: "Ловкость", intellect: "Интеллект", charisma: "Харизма" } },
-    config: { textSpeed: 15 }, // Чуть ускорил текст
+    config: { textSpeed: 15 }, 
     typingTimer: null,
 
     // --- UI СИСТЕМА ---
@@ -36,45 +37,38 @@ const Game = {
             container.appendChild(el);
             setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 3000);
         },
-        // АВТО-СКРОЛЛ: Самая важная функция
         scrollToBottom: function() {
             const main = document.querySelector('.main-content');
-            // Прокручиваем контейнер вниз
             main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
-            // На всякий случай скроллим и всё тело документа (для мобилок)
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
     },
 
+    // --- ЗАПУСК ---
     init: function() {
         this.loadProgress();
         this.updateUI();
         this.renderScene(this.state.story.sceneId);
     },
 
+    // --- ДВИЖОК СЦЕН ---
     renderScene: function(sceneId) {
-        // 1. ПРОВЕРКА НАЛИЧИЯ СЦЕНЫ
-        if (!this.scenes[sceneId]) { 
-            this.renderWIP(); 
-            return; 
-        }
-
+        if (!this.scenes[sceneId]) { this.renderWIP(); return; }
         const scene = this.scenes[sceneId];
         
-        // Очистка таймеров
         if (this.typingTimer) clearTimeout(this.typingTimer);
 
         const output = document.getElementById("current-scene");
         const log = document.getElementById("story-log");
         const choicesDiv = document.getElementById("choices-container");
 
-        // 2. ПЕРЕНОС СТАРОГО ТЕКСТА В ЛОГ
+        // Логирование старого текста
         if (output.innerHTML && this.state.story.sceneId !== sceneId) {
             const entry = document.createElement("div");
-            entry.className = "log-entry"; // Добавь класс в CSS если хочешь стилизовать
+            entry.className = "log-entry";
             entry.innerHTML = output.innerHTML;
             entry.style.marginBottom = "20px";
-            entry.style.opacity = "0.6";
+            entry.style.opacity = "0.7";
             entry.style.borderBottom = "1px solid #333";
             entry.style.paddingBottom = "15px";
             log.appendChild(entry);
@@ -85,24 +79,20 @@ const Game = {
 
         if (scene.actions) scene.actions.forEach(act => this.executeAction(act));
 
-        // 3. ПОДГОТОВКА НОВОГО ТЕКСТА
+        // Подготовка текста
         let rawText = scene.text.replace(/{name}/g, this.state.hero.name);
         output.innerHTML = ""; 
         output.classList.add("typing-cursor");
-        choicesDiv.innerHTML = ""; // Очищаем кнопки сразу
+        choicesDiv.innerHTML = "";
         choicesDiv.style.opacity = "0";
 
-        // Скроллим сразу, чтобы подготовить место
         this.ui.scrollToBottom();
 
         this.typeWriter(output, rawText, 0, () => {
             output.classList.remove("typing-cursor");
             choicesDiv.style.opacity = "1";
-            
             if (scene.type === "input") this.renderInput(scene);
             else this.renderChoices(scene);
-            
-            // Скроллим еще раз, когда появились кнопки
             setTimeout(() => this.ui.scrollToBottom(), 100); 
         });
     },
@@ -117,7 +107,6 @@ const Game = {
                 this.typeWriter(element, text, i, callback);
             } else {
                 element.innerHTML += text.charAt(i++);
-                // Каждые 50 символов подкручиваем скролл, если текст длинный
                 if (i % 50 === 0) this.ui.scrollToBottom(); 
                 this.typingTimer = setTimeout(() => this.typeWriter(element, text, i, callback), this.config.textSpeed);
             }
@@ -126,7 +115,7 @@ const Game = {
 
     renderChoices: function(scene) {
         const container = document.getElementById("choices-container");
-        container.innerHTML = ""; // ЗАЩИТА ОТ ДУБЛИРОВАНИЯ
+        container.innerHTML = "";
         
         if (!scene.choices) return;
 
@@ -138,7 +127,15 @@ const Game = {
             if (choice.req) {
                 const statName = this.loc.stats[choice.req.stat] || choice.req.stat;
                 const statVal = this.state.hero.stats[choice.req.stat] || 0;
-                if (statVal < choice.req.val) {
+                
+                // Проверка предметов (если ключ 'item') или статов
+                if (choice.req.item) {
+                     if (!this.state.hero.inventory.includes(choice.req.item)) {
+                        allowed = false;
+                        label += ` <span style='color:#c0392b; font-size:0.8em'>[Нужен: ${choice.req.item}]</span>`;
+                        btn.style.opacity = "0.6";
+                     }
+                } else if (statVal < choice.req.val) {
                     allowed = false;
                     label += ` <span style='color:#c0392b; font-size:0.8em'>[${statName} ${choice.req.val}]</span>`;
                     btn.style.opacity = "0.6";
@@ -147,24 +144,37 @@ const Game = {
                     btn.style.borderColor = "#27ae60";
                 }
             }
+
             btn.innerHTML = label;
-            if (!allowed && !choice.fallback) btn.disabled = true;
-            else btn.onclick = () => {
-                if (choice.effect) this.applyEffect(choice.effect);
-                this.renderScene((!allowed && choice.fallback) ? choice.fallback : choice.next);
-            };
+
+            if (!allowed && !choice.fallback) {
+                btn.disabled = true;
+            } else {
+                btn.onclick = () => {
+                    if (choice.effect) this.applyEffect(choice.effect);
+                    
+                    let nextTarget = (!allowed && choice.fallback) ? choice.fallback : choice.next;
+                    
+                    // ЛОГИКА СЛУЧАЙНОСТИ
+                    // Если next - это массив ["win", "lose"], выбираем случайно
+                    if (Array.isArray(nextTarget)) {
+                        const randIndex = Math.floor(Math.random() * nextTarget.length);
+                        nextTarget = nextTarget[randIndex];
+                    }
+
+                    this.renderScene(nextTarget);
+                };
+            }
             container.appendChild(btn);
         });
     },
 
     renderInput: function(scene) {
         const container = document.getElementById("choices-container");
-        container.innerHTML = "";
-        
         const input = document.createElement("input");
         input.placeholder = "Введите имя...";
-        input.style.padding = "15px"; input.style.width="100%"; input.style.background="#333"; input.style.color="#fff";
-        input.style.marginBottom = "10px";
+        input.style.padding = "15px"; input.style.width="100%"; input.style.marginBottom="10px";
+        input.style.background="#333"; input.style.color="#fff"; input.style.border="1px solid #555";
         
         const btn = document.createElement("button");
         btn.innerText = "Подтвердить";
@@ -178,47 +188,45 @@ const Game = {
         container.appendChild(input); container.appendChild(btn);
     },
 
-    // ИСПРАВЛЕННЫЙ RENDER WIP
     renderWIP: function() {
         const output = document.getElementById("current-scene");
-        const choicesDiv = document.getElementById("choices-container");
-        
-        // Не пишем в лог, просто меняем текущий текст
-        output.innerHTML = "<br><br><div style='text-align:center; color:#888; border:1px dashed #444; padding:20px;'>📜<br>На этом свитки летописцев пока чисты.<br>История продолжится в следующих обновлениях.</div>";
-        
-        choicesDiv.innerHTML = ""; // Очищаем контейнер, чтобы кнопки не копились
+        document.getElementById("choices-container").innerHTML = "";
+        output.innerHTML = "<div style='text-align:center; padding:30px; color:#888; border:1px dashed #444;'>📜<br>Здесь обрываются известные летописи.<br>История продолжится в следующих обновлениях.</div>";
         
         const btn = document.createElement("button");
-        btn.innerText = "⟳ Начать путешествие заново";
+        btn.innerText = "⟳ Начать сначала";
+        btn.className = "danger-btn";
         btn.style.marginTop = "20px";
-        btn.classList.add("danger-btn");
         btn.onclick = () => this.resetGame();
-        
-        choicesDiv.appendChild(btn);
+        document.getElementById("choices-container").appendChild(btn);
         this.ui.scrollToBottom();
     },
 
     executeAction: function(act) {
         if (act.type === "addItem" && !this.state.hero.inventory.includes(act.item)) {
             this.state.hero.inventory.push(act.item);
-            this.ui.showToast(`Получено: ${act.item}`);
+            this.ui.showToast(`🎒 Получено: ${act.item}`);
+        }
+        if (act.type === "removeItem") {
+            const idx = this.state.hero.inventory.indexOf(act.item);
+            if (idx > -1) {
+                this.state.hero.inventory.splice(idx, 1);
+                this.ui.showToast(`🗑 Отдано: ${act.item}`);
+            }
         }
         if (act.type === "rep") {
             if (!this.state.hero.reputation[act.faction]) this.state.hero.reputation[act.faction] = 0;
             this.state.hero.reputation[act.faction] += act.val;
-            const sign = act.val > 0 ? "+" : "";
-            this.ui.showToast(`Репутация (${act.faction}): ${sign}${act.val}`);
+            this.ui.showToast(`Репутация (${act.faction}): ${act.val > 0 ? '+' : ''}${act.val}`);
         }
         if (act.type === "damage") {
             this.state.hero.hp = Math.max(0, this.state.hero.hp - act.val);
             this.ui.showToast(`💔 Урон: -${act.val}`);
         }
-        // Вставь это внутрь executeAction
         if (act.type === "heal") {
             this.state.hero.hp = Math.min(this.state.hero.maxHp, this.state.hero.hp + act.val);
             this.ui.showToast(`💚 Лечение: +${act.val}`);
-            this.updateUI();
-         }
+        }
         if (act.type === "xp") this.gainExp(act.val);
         this.updateUI();
     },
@@ -232,11 +240,10 @@ const Game = {
             this.state.hero.maxExp = Math.floor(this.state.hero.maxExp * 1.5);
             this.state.hero.maxHp += 15;
             this.state.hero.hp = this.state.hero.maxHp;
-            // Бонус к статам рандомно или все +1
             this.state.hero.stats.strength++;
             this.state.hero.stats.agility++;
             this.state.hero.stats.intellect++;
-            alert(`🎉 УРОВЕНЬ ПОВЫШЕН! \nТеперь вы уровень ${this.state.hero.lvl}.\nВсе характеристики +1.`);
+            alert(`🎉 НОВЫЙ УРОВЕНЬ: ${this.state.hero.lvl}!\nВсе характеристики +1\nHP восстановлено.`);
         }
     },
 
@@ -244,6 +251,9 @@ const Game = {
         if (eff.stat) {
             this.state.hero.stats[eff.stat] += eff.val;
             this.ui.showToast(`${this.loc.stats[eff.stat]} ${eff.val > 0 ? '+' : ''}${eff.val}`);
+        }
+        if (eff.gold) { 
+             // Если захотим добавить валюту как стат, можно тут
         }
         this.updateUI();
     },
@@ -270,8 +280,7 @@ const Game = {
 
         const fList = document.getElementById("factions-list");
         fList.innerHTML = "";
-        if (Object.keys(h.reputation).length === 0) fList.innerHTML = "<li style='opacity:0.5; text-align:center'>Вас никто не знает</li>";
-        else for (let [k, v] of Object.entries(h.reputation)) {
+        for (let [k, v] of Object.entries(h.reputation)) {
             let color = v > 0 ? "#27ae60" : "#c0392b";
             fList.innerHTML += `<li style="display:flex; justify-content:space-between; padding:5px 0;"><span>${k}</span> <span style="color:${color}">${v}</span></li>`;
         }
