@@ -1,15 +1,17 @@
 :root {
-    --bg-color: #111;
+    --bg-color: #121212;
     --panel-bg: #1e1e1e;
     --text-color: #e0e0e0;
-    --accent-color: #9b59b6; /* Фиолетовый оттенок */
-    --button-bg: #2d2d2d;
-    --button-hover: #444;
-    --border-color: #444;
+    --accent-color: #9b59b6; /* Мистический фиолетовый */
+    --accent-hover: #8e44ad;
+    --border-color: #333;
+    --success-color: #27ae60;
+    --fail-color: #c0392b;
     --font-main: 'Verdana', sans-serif;
-    --font-header: 'Georgia', serif;
+    --font-serif: 'Georgia', serif;
 }
 
+/* Базовые настройки и блокировка зума */
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -20,48 +22,65 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    touch-action: manipulation;
+    user-select: none; /* Защита от выделения текста */
 }
 
+/* СЕТКА ИНТЕРФЕЙСА */
 .game-container {
     display: grid;
-    /* ПК: 3 колонки */
-    grid-template-columns: 280px 1fr 280px; 
+    grid-template-columns: 260px 1fr 260px;
     width: 98%;
-    height: 95vh;
+    height: 96vh;
     gap: 15px;
     background: #181818;
     border: 1px solid var(--border-color);
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
+/* ПАНЕЛИ */
 .sidebar {
     background: var(--panel-bg);
     padding: 15px;
     border: 1px solid var(--border-color);
-    overflow-y: auto;
-    font-size: 0.9em;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .panel-header {
-    font-family: var(--font-header);
-    font-size: 1.2em;
-    border-bottom: 2px solid var(--accent-color);
+    font-family: var(--font-serif);
+    font-size: 1.1em;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--accent-color);
     margin-bottom: 10px;
-    color: #fff;
     padding-bottom: 5px;
     text-align: center;
 }
 
+/* ГЕРОЙ */
+#char-info { margin-bottom: 20px; text-align: center; }
+.char-header { margin-bottom: 10px; }
+#char-name { font-size: 1.2em; font-weight: bold; color: #fff; display: block;}
+.subtitle { font-size: 0.8em; color: #aaa; }
+
+.health-bar { background: #333; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 5px;}
+#hp-fill { background: #c0392b; height: 100%; width: 100%; transition: width 0.5s ease; }
+
+#stats-list { list-style: none; padding: 0; }
+#stats-list li { padding: 5px 0; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; }
+
+/* ЦЕНТРАЛЬНАЯ ЧАСТЬ */
 .main-content {
+    background: #151515;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    background: #141414;
-    border: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
     position: relative;
-    overflow: hidden;
 }
 
 #story-log {
@@ -69,63 +88,61 @@ body {
     overflow-y: auto;
     margin-bottom: 20px;
     padding-right: 10px;
-    color: #888;
+    font-family: var(--font-serif);
+    color: #777;
     font-size: 0.95em;
-    border-bottom: 1px dashed #333;
+    mask-image: linear-gradient(to bottom, transparent, black 10%); /* Эффект затухания сверху */
 }
+
+.log-entry { margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 10px; }
 
 #current-scene {
-    min-height: 100px; /* Чтобы текст не прыгал */
-    font-size: 1.1em;
+    min-height: 120px;
+    font-size: 1.15em;
     line-height: 1.6;
+    color: #fff;
     margin-bottom: 20px;
-    color: #fff;
     white-space: pre-line;
+    font-family: var(--font-serif);
 }
 
-/* Элементы управления */
+/* Анимация курсора */
+.typing-cursor::after {
+    content: '▋';
+    display: inline-block;
+    vertical-align: baseline;
+    animation: blink 1s infinite;
+    color: var(--accent-color);
+    margin-left: 4px;
+    font-size: 0.8em;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* КНОПКИ */
+#choices-container { display: flex; flex-direction: column; gap: 10px; }
+
 button {
-    background: var(--button-bg);
-    border: 1px solid var(--border-color);
-    color: #fff;
+    background: #252525;
+    color: #ddd;
+    border: 1px solid #444;
     padding: 15px;
-    margin-bottom: 10px;
-    width: 100%;
     font-size: 1em;
-    cursor: pointer;
     text-align: left;
-    transition: 0.2s;
+    cursor: pointer;
+    transition: all 0.2s;
     border-radius: 4px;
+    user-select: none;
 }
 
-button:hover {
-    background: var(--button-hover);
-    border-color: var(--accent-color);
+button:hover { background: #333; border-color: var(--accent-color); color: #fff; transform: translateX(5px); }
+button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+button.danger-btn { margin-top: auto; background: #300; border-color: #500; text-align: center; }
+
+/* ИНВЕНТАРЬ */
+#inventory-list { list-style: none; padding: 0; }
+#inventory-list li { 
+    background: #222; margin-bottom: 5px; padding: 8px; border-radius: 3px; border: 1px solid #333; font-size: 0.9em;
 }
-
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Инпуты */
-input#player-input {
-    background: #222;
-    border: 1px solid var(--border-color);
-    color: #fff;
-    padding: 10px;
-    width: 60%;
-    margin-right: 5px;
-}
-
-/* Списки */
-ul { padding-left: 20px; margin: 0; }
-li { margin-bottom: 5px; }
-
-/* Полоска здоровья */
-.health-bar-container { margin-top: 10px; }
-.health-bar { background: #333; height: 10px; border: 1px solid #555; width: 100%; }
-#hp-fill { background: #c0392b; height: 100%; width: 100%; transition: width 0.3s; }
 
 /* --- МОБИЛЬНАЯ АДАПТАЦИЯ --- */
 @media (max-width: 768px) {
@@ -134,44 +151,50 @@ li { margin-bottom: 5px; }
         flex-direction: column;
         width: 100%;
         height: 100vh;
-        border: none;
         gap: 0;
+        border: none;
     }
 
-    /* Верхняя панель (Герой) - делаем компактной */
+    /* Верх: Герой (компактно) */
     .left-sidebar {
-        order: 1;
-        flex-basis: 15%; /* Занимает 15% высоты экрана */
-        flex-direction: row; /* В строку */
-        flex-wrap: wrap;
+        flex-basis: auto;
         padding: 10px;
-        gap: 10px;
+        flex-direction: row;
+        justify-content: space-between;
         align-items: center;
         border-bottom: 2px solid var(--accent-color);
+        background: #111;
+        z-index: 10;
     }
-    
-    .left-sidebar .panel-header { display: none; } /* Скрываем заголовок "Герой" */
-    
-    #char-info { display: flex; gap: 15px; align-items: center; width: 100%; font-size: 0.8em;}
-    #stats-list { display: flex; gap: 10px; list-style: none; padding: 0; font-size: 0.8em; width: 100%; justify-content: space-around;}
-    
-    /* Центральная часть (Сюжет) */
+    .left-sidebar .panel-header, #status-effects { display: none; }
+    #stats-list { display: none; } /* Скрываем статы на мобилке, чтобы не занимали место */
+    #char-info { margin: 0; text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+    .health-bar-container { width: 100px; }
+
+    /* Центр: Сюжет */
     .main-content {
-        order: 2;
-        flex-grow: 1; /* Занимает все свободное место */
-        border: none;
+        flex-grow: 1;
         padding: 15px;
+        border: none;
     }
-
+    #story-log { display: none; } /* На мобилке скрываем лог, оставляем только актуальное */
     #current-scene { font-size: 1em; }
-    button { padding: 12px; font-size: 0.95em; }
 
-    /* Нижняя панель (Инвентарь) */
+    /* Низ: Инвентарь и Кнопки */
     .right-sidebar {
-        order: 3;
-        flex-basis: 10%; /* Узкая полоска снизу */
-        padding: 5px;
-        font-size: 0.8em;
+        flex-basis: 35%; /* Отдаем 35% экрана под инвентарь и кнопки */
+        border-top: 2px solid var(--accent-color);
+        padding: 10px;
     }
-    .right-sidebar .panel-header { font-size: 1em; margin-bottom: 5px; }
+    
+    #inventory-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+        max-height: 100px;
+        overflow-y: auto;
+    }
+    
+    .system-controls { margin-top: 10px; }
+    button { padding: 12px; font-size: 0.95em; }
 }
