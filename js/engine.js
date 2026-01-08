@@ -213,6 +213,12 @@ const Game = {
             this.state.hero.hp = Math.max(0, this.state.hero.hp - act.val);
             this.ui.showToast(`💔 Урон: -${act.val}`);
         }
+        // Вставь это внутрь executeAction
+        if (act.type === "heal") {
+            this.state.hero.hp = Math.min(this.state.hero.maxHp, this.state.hero.hp + act.val);
+            this.ui.showToast(`💚 Лечение: +${act.val}`);
+            this.updateUI();
+         }
         if (act.type === "xp") this.gainExp(act.val);
         this.updateUI();
     },
