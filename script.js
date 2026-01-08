@@ -1,62 +1,105 @@
-// --- КОНФИГУРАЦИЯ И СОСТОЯНИЕ ---
+// --- ГЛОБАЛЬНЫЙ ЛОР И КОНФИГ ---
 const Game = {
     state: {
         hero: {
-            name: "Странник",
-            class: null,
+            name: "Безымянный",
+            class: "Нет",
             lvl: 1,
             hp: 100,
             maxHp: 100,
-            stats: { strength: 1, agility: 1, intellect: 1, charisma: 1 },
+            exp: 0,
+            stats: { strength: 5, agility: 5, intellect: 5, charisma: 5 },
             inventory: [],
-            equipment: { weapon: null, armor: null }
+            reputation: { "Империя": 0, "Мятежники": 0 }
         },
         story: {
-            chapter: 0,
-            sceneId: "start",
-            history: [] // Для лога
+            chapter: "prologue",
+            sceneId: "intro_01",
+            history: []
         },
-        flags: {} // Глобальные переменные (убил_стражника: true и т.д.)
+        flags: {} 
     },
 
-    // База данных сцен (в будущем будем подгружать из файлов)
+    // --- БАЗА ДАННЫХ СЦЕН (ГЛАВА 0: ПРОЛОГ) ---
     scenes: {
-        "start": {
-            text: "Твои глаза открываются. Вокруг темно и сыро. Пахнет плесенью и старой кровью. Ты лежишь на холодном каменном полу тюремной камеры. Голова раскалывается.",
+        // Сцена ввода имени
+        "intro_01": {
+            text: "Мир Этерии стар. Гораздо старше, чем говорят летописи Жрецов Солнца.\n\nПеред тем как ваша судьба переплетется с историей этого мира, назовите себя.",
+            type: "input", // Специальный тип сцены
+            next: "intro_lore"
+        },
+        "intro_lore": {
+            text: "Добро пожаловать, {name}.\n\nВы находитесь в году 482-м от Падения Небес. Империя Асферат трещит по швам. На севере проснулись вулканы, спавшие тысячу лет. На юге шепчутся о возвращении 'Бледного Короля'.\n\nНо ваша история начинается не во дворце и не на поле брани.\n\nОна начинается в сыром подвале долговой тюрьмы города Ривергард.",
             choices: [
-                { text: "Осмотреться", next: "look_cell" },
-                { text: "Ощупать себя (Проверка Интеллекта)", req: { stat: "intellect", val: 2 }, next: "check_self_success", fallback: "check_self_fail" },
-                { text: "Закричать", next: "scream" }
+                { text: "Открыть глаза", next: "prison_wakeup" }
             ]
         },
-        "look_cell": {
-            text: "Камера пуста. Лишь гнилая солома в углу и ржавая ложка у двери. Дверь выглядит хлипкой, но заперта.",
-            actions: [ { type: "addItem", item: "Ржавая ложка" } ], // Пример получения предмета
+        "prison_wakeup": {
+            text: "Голова гудит, словно по ней ударили молотом кузнеца. Вы лежите на гнилой соломе. Вокруг темно, лишь слабый луч лунного света пробивается сквозь узкую решетку под потолком.\n\nЗа стеной слышны капли воды: кап... кап... кап... Этот звук сводит с ума.\nПочему вы здесь? Память возвращается осколками.",
             choices: [
-                { text: "Подобрать ложку", next: "get_spoon" },
-                { text: "Попробовать выбить дверь (Сила)", req: { stat: "strength", val: 3 }, next: "break_door", fallback: "break_door_fail" }
+                { text: "Вспомнить: Меня подставили (Интеллект +1)", next: "origin_smart", effect: {stat: "intellect", val: 1} },
+                { text: "Вспомнить: Я убил человека в пьяной драке (Сила +1)", next: "origin_strong", effect: {stat: "strength", val: 1} },
+                { text: "Вспомнить: Я украл хлеб для сестры (Ловкость +1)", next: "origin_fast", effect: {stat: "agility", val: 1} }
             ]
         },
-        "get_spoon": {
-            text: "Ты берешь ложку. Она острая. Может сойти за оружие в крайнем случае.",
+        "origin_smart": {
+            text: "Точно... Вы были писарем у местного барона. Вы нашли документы, которые не должны были видеть. О хищениях золота, выделенного на починку городской стены.\nВас схватили ночью, мешок на голову — и вот вы здесь. Они думают, вы ничего не знаете. Или ждут момента, чтобы убрать свидетеля.",
+            choices: [{ text: "Осмотреться", next: "cell_inspect" }]
+        },
+        "origin_strong": {
+            text: "В таверне 'Хромой Дракон' сержант стражи оскорбил вашу честь. Вы не стерпели. Ваш кулак оказался тяжелее, чем его челюсть. Теперь вам грозит виселица или каторга на рудниках 'Глубокая Глотка'.",
+            choices: [{ text: "Осмотреться", next: "cell_inspect" }]
+        },
+        "origin_fast": {
+            text: "Голод — плохой советчик. Зима была суровой, и цены на зерно взлетели. Вы стащили всего одну буханку с прилавка толстяка Гюнтера. Но вас поймали патрульные. В Ривергарде за воровство отрубают руку. Вам страшно.",
+            choices: [{ text: "Осмотреться", next: "cell_inspect" }]
+        },
+        "cell_inspect": {
+            text: "Камера три на три шага. Стены сложены из 'серого камня' — породы, которую добывают только в шахтах гномов далеко на востоке. Странно видеть такой дорогой камень в обычной тюрьме.\n\nВ углу лежит скелет, закованный в кандалы. На его пальце что-то блестит.",
             choices: [
-                { text: "Вернуться к двери", next: "door_interaction" }
+                { text: "Обыскать скелет", next: "search_skeleton" },
+                { text: "Подойти к двери и послушать", next: "listen_door" },
+                { text: "Попытаться расшатать решетку (Требуется Сила 6)", req: {stat: "strength", val: 6}, next: "break_bars", fallback: "break_bars_fail" }
             ]
         },
-        "door_interaction": {
-            text: "Ты стоишь у двери. Слышны шаги стражника.",
+        "search_skeleton": {
+            text: "Вы осторожно подходите к костям. Судя по истлевшим лохмотьям, этот бедолага здесь лет пятьдесят. \nВы снимаете с костяного пальца кольцо. Оно грубое, железное, с выгравированным символом: расколотый щит.",
+            actions: [{type: "addItem", item: "Кольцо 'Расколотый щит'"}],
             choices: [
-                { text: "Притвориться мертвым", next: "fake_death" },
-                { text: "Спрятаться в тени", next: "hide_shadow" }
+                { text: "Надеть кольцо", next: "wear_ring" },
+                { text: "Спрятать в карман", next: "hide_ring" }
             ]
         },
-        // ... (Сюда мы будем добавлять тысячи строк сюжета) ...
-        "coming_soon": {
-            text: "Это конец демо-версии. Выберите сюжет, чтобы продолжить разработку.",
+        "listen_door": {
+            text: "За дверью тишина. Но вдруг вы слышите шаги. Тяжелые, металлические. Это не обычная стража. Лязг доспехов слишком ритмичный. \nГолос: '...приказ Лорда-Протектора. Зачистить нижний уровень. Никто не должен выйти'.",
             choices: [
-                { text: "Сбросить прогресс", action: "reset" }
+                { text: "Отойти от двери", next: "retreat_door" }
             ]
-        }
+        },
+        "wear_ring": {
+            text: "Как только холодное железо касается кожи, вы чувствуете легкое покалывание. В голове проносится шепот: *'Клятва... не... забыта...'*.\n\n(Ваша репутация с Мятежниками повысилась)",
+            actions: [{type: "rep", faction: "Мятежники", val: 5}],
+            choices: [
+                 { text: "Что это было?", next: "listen_door" }
+            ]
+        },
+        "hide_ring": {
+             text: "Вы прячете кольцо. Лучше не светить им. Интуиция подсказывает, что за этот символ могут убить на месте.",
+             choices: [
+                 { text: "Вернуться к двери", next: "listen_door" }
+            ]
+        },
+        "retreat_door": {
+            text: "Шаги останавливаются прямо у вашей двери. Скрежет ключа в замке...",
+            choices: [
+                { text: "Приготовиться к бою", next: "prepare_fight" },
+                { text: "Забиться в угол", next: "hide_corner" }
+            ]
+        },
+        // ЗАГЛУШКА ДЛЯ ДАЛЬНЕЙШЕЙ РАЗРАБОТКИ
+        "prepare_fight": { text: "Дверь распахивается... (Конец демо-части Пролога. Попроси AI сгенерировать продолжение Главы 1)", choices: []},
+        "hide_corner": { text: "Дверь распахивается... (Конец демо-части Пролога. Попроси AI сгенерировать продолжение Главы 1)", choices: []},
+        "break_bars_fail": { text: "Решетка даже не шелохнулась. Нужна нечеловеческая сила.", choices: [{text: "Назад", next: "cell_inspect"}]}
     },
 
     // --- ИНИЦИАЛИЗАЦИЯ ---
@@ -66,93 +109,123 @@ const Game = {
         this.renderScene(this.state.story.sceneId);
     },
 
-    // --- ДВИЖОК СЦЕН ---
+    // --- РЕНДЕР СЦЕНЫ ---
     renderScene: function(sceneId) {
-        const scene = this.scenes[sceneId] || this.scenes["coming_soon"];
+        const scene = this.scenes[sceneId];
+        if (!scene) {
+            console.error("Сцена не найдена: " + sceneId);
+            return;
+        }
+
         const output = document.getElementById("current-scene");
         const choicesDiv = document.getElementById("choices-container");
         const log = document.getElementById("story-log");
+        const inputContainer = document.getElementById("choices-container"); // Используем тот же контейнер
 
-        // 1. Сохраняем прошлый текст в лог (если это не старт)
-        if (output.innerHTML !== "") {
+        // 1. Логирование прошлого текста
+        if (this.state.story.sceneId !== sceneId && output.innerText) {
             const entry = document.createElement("div");
-            entry.className = "log-entry";
             entry.innerHTML = output.innerHTML;
+            entry.style.marginBottom = "15px";
             log.appendChild(entry);
             log.scrollTop = log.scrollHeight;
         }
 
-        // 2. Выполняем действия сцены (если есть)
-        if (scene.actions) {
-            scene.actions.forEach(act => this.executeAction(act));
-        }
-
-        // 3. Анимация печати текста
-        output.innerHTML = "";
-        let i = 0;
-        const speed = 20; // скорость печати
-        
-        function typeWriter() {
-            if (i < scene.text.length) {
-                output.innerHTML += scene.text.charAt(i);
-                i++;
-                setTimeout(typeWriter, speed);
-            } else {
-                Game.renderChoices(scene.choices);
-            }
-        }
-        typeWriter();
-
         this.state.story.sceneId = sceneId;
         this.saveProgress();
-    },
 
-    renderChoices: function(choices) {
-        const container = document.getElementById("choices-container");
-        container.innerHTML = "";
+        // 2. Обработка действий (предметы, статы)
+        if (scene.actions) {
+            scene.actions.forEach(act => this.executeAction(act));
+            scene.actions = null; // Чтобы не срабатывало повторно при перезагрузке
+        }
 
-        choices.forEach(choice => {
+        // 3. Вывод текста (с заменой {name})
+        let formattedText = scene.text.replace(/{name}/g, this.state.hero.name);
+        output.innerHTML = formattedText;
+
+        // 4. Отрисовка выбора или ввода
+        choicesDiv.innerHTML = "";
+
+        if (scene.type === "input") {
+            // Создаем поле ввода
+            const wrap = document.createElement("div");
+            wrap.className = "input-container";
+            
+            const input = document.createElement("input");
+            input.id = "player-input";
+            input.placeholder = "Введите имя героя...";
+            
             const btn = document.createElement("button");
-            
-            // Логика требований (статы, предметы)
-            let allowed = true;
-            let label = choice.text;
-
-            if (choice.req) {
-                const statVal = this.state.hero.stats[choice.req.stat] || 0;
-                if (statVal < choice.req.val) {
-                    allowed = false;
-                    label += ` <span class="req-fail">[Требуется ${choice.req.stat} ${choice.req.val}]</span>`;
-                } else {
-                    label += ` <span class="req-met">[${choice.req.stat} ✓]</span>`;
+            btn.innerText = "Принять";
+            btn.onclick = () => {
+                if(input.value.trim() !== "") {
+                    this.state.hero.name = input.value.trim();
+                    this.updateUI();
+                    this.renderScene(scene.next);
                 }
-            }
+            };
 
-            btn.innerHTML = label;
-            
-            if (choice.action === "reset") {
-                btn.onclick = () => this.resetGame();
-            } else if (!allowed && choice.fallback) {
-                // Если требование не выполнено, ведем на ветку провала
-                btn.onclick = () => this.renderScene(choice.fallback);
-            } else if (!allowed) {
-                btn.disabled = true;
-            } else {
-                btn.onclick = () => this.renderScene(choice.next);
-            }
+            wrap.appendChild(input);
+            wrap.appendChild(btn);
+            choicesDiv.appendChild(wrap);
+            input.focus();
 
-            container.appendChild(btn);
-        });
+        } else {
+            // Обычные кнопки выбора
+            scene.choices.forEach(choice => {
+                const btn = document.createElement("button");
+                
+                let label = choice.text;
+                let allowed = true;
+
+                // Проверка требований
+                if (choice.req) {
+                    const statVal = this.state.hero.stats[choice.req.stat] || 0;
+                    if (statVal < choice.req.val) {
+                        allowed = false;
+                        label += ` [Нужно: ${choice.req.stat} ${choice.req.val}]`;
+                        btn.style.color = "#777";
+                    } else {
+                         label += ` [${choice.req.stat} ✓]`;
+                         btn.style.color = "#8f8";
+                    }
+                }
+
+                btn.innerText = label;
+
+                if (!allowed && choice.fallback) {
+                    btn.onclick = () => {
+                        this.renderScene(choice.fallback);
+                    };
+                } else if (!allowed) {
+                    btn.disabled = true;
+                } else {
+                    btn.onclick = () => {
+                        // Если есть эффект выбора (например +1 к силе сразу)
+                        if (choice.effect) {
+                            this.state.hero.stats[choice.effect.stat] += choice.effect.val;
+                            this.updateUI();
+                        }
+                        this.renderScene(choice.next);
+                    };
+                }
+                choicesDiv.appendChild(btn);
+            });
+        }
     },
 
     // --- СИСТЕМНЫЕ ФУНКЦИИ ---
     executeAction: function(action) {
         if (action.type === "addItem") {
             this.state.hero.inventory.push(action.item);
-            alert(`Получено: ${action.item}`);
             this.updateUI();
         }
-        // Тут можно добавить damage, heal, reputation и т.д.
+        if (action.type === "rep") {
+            if (!this.state.hero.reputation[action.faction]) this.state.hero.reputation[action.faction] = 0;
+            this.state.hero.reputation[action.faction] += action.val;
+            this.updateUI();
+        }
     },
 
     updateUI: function() {
@@ -165,40 +238,47 @@ const Game = {
         sList.innerHTML = "";
         for (let [key, val] of Object.entries(this.state.hero.stats)) {
             let li = document.createElement("li");
-            li.innerText = `${key}: ${val}`;
+            li.innerHTML = `<b>${key.toUpperCase()}</b>: ${val}`;
+            li.style.marginBottom = "5px";
             sList.appendChild(li);
         }
 
         // Инвентарь
         const iList = document.getElementById("inventory-list");
         iList.innerHTML = "";
-        if (this.state.hero.inventory.length === 0) {
-            iList.innerHTML = '<li class="empty-msg">Пусто</li>';
-        } else {
-            this.state.hero.inventory.forEach(item => {
-                let li = document.createElement("li");
-                li.innerText = item;
-                iList.appendChild(li);
-            });
-        }
+        this.state.hero.inventory.forEach(item => {
+            let li = document.createElement("li");
+            li.innerText = item;
+            iList.appendChild(li);
+        });
+
+        // Репутация
+         const rList = document.getElementById("factions-list");
+         rList.innerHTML = "";
+         for (let [key, val] of Object.entries(this.state.hero.reputation)) {
+             let li = document.createElement("li");
+             li.innerText = `${key}: ${val}`;
+             rList.appendChild(li);
+         }
     },
 
     saveProgress: function() {
-        localStorage.setItem("rpg_save", JSON.stringify(this.state));
+        localStorage.setItem("rpg_save_v2", JSON.stringify(this.state));
     },
 
     loadProgress: function() {
-        const data = localStorage.getItem("rpg_save");
+        const data = localStorage.getItem("rpg_save_v2");
         if (data) {
             this.state = JSON.parse(data);
         }
     },
 
     resetGame: function() {
-        localStorage.removeItem("rpg_save");
-        location.reload();
+        if(confirm("Точно удалить сохранение?")) {
+            localStorage.removeItem("rpg_save_v2");
+            location.reload();
+        }
     }
 };
 
-// Запуск
 window.onload = () => Game.init();
