@@ -5,56 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Эпоха Раскола</title>
     <link rel="stylesheet" href="css/style.css">
-</head>
+    </head>
 <body>
 
-    <div class="game-container">
-        <aside class="sidebar left-sidebar">
-            <div id="char-info">
-                <div class="char-header">
-                    <span id="char-name">...</span>
-                    <span id="char-class" class="subtitle">Нет класса</span>
-                </div>
-                <div class="health-bar-container">
-                    <div class="health-bar"><div id="hp-fill"></div></div>
-                </div>
+    <header class="top-bar">
+        <div class="char-summary">
+            <span id="char-name">Безымянный</span>
+            <span class="lvl-badge">Ур. <span id="char-lvl">1</span></span>
+        </div>
+        <div class="bars-container">
+            <div class="bar-wrap hp-wrap">
+                <div class="bar-fill" id="hp-fill"></div>
+                <span class="bar-text">HP</span>
             </div>
-            <ul id="stats-list"></ul>
-            <div id="status-effects"></div>
-        </aside>
+            <div class="bar-wrap exp-wrap">
+                <div class="bar-fill" id="exp-fill"></div>
+                <span class="bar-text">XP</span>
+            </div>
+        </div>
+    </header>
 
+    <div class="game-container">
         <main class="main-content">
             <div id="story-log"></div>
-            
             <div id="current-scene"></div>
-
             <div id="choices-container"></div>
         </main>
-
-        <aside class="sidebar right-sidebar">
-            <div class="panel-header">Инвентарь</div>
-            <ul id="inventory-list">
-                <li style="opacity:0.5; text-align:center;">Пусто</li>
-            </ul>
-
-            <div class="panel-header">Репутация</div>
-            <ul id="factions-list"></ul>
-
-            <div class="system-controls">
-                <button onclick="Game.resetGame()" class="danger-btn">Начать заново</button>
-            </div>
-        </aside>
     </div>
 
+    <nav class="bottom-nav">
+        <button onclick="Game.ui.openModal('modal-hero')">👤 Герой</button>
+        <button onclick="Game.ui.openModal('modal-inv')">🎒 Сумка</button>
+        <button onclick="Game.ui.openModal('modal-rep')">📜 Фракции</button>
+        <button onclick="Game.ui.openModal('modal-sys')">⚙️ Меню</button>
+    </nav>
+
+    <div id="modal-overlay" class="hidden" onclick="Game.ui.closeAllModals()"></div>
+
+    <div id="modal-hero" class="modal hidden">
+        <div class="modal-header">Характеристики <button class="close-btn" onclick="Game.ui.closeAllModals()">×</button></div>
+        <div class="modal-body">
+            <p class="hero-class-text">Класс: <span id="modal-class">Нет</span></p>
+            <ul id="stats-list" class="stats-grid"></ul>
+            <hr>
+            <p style="font-size:0.9em; color:#888;">Выполняйте действия, чтобы прокачивать навыки.</p>
+        </div>
+    </div>
+
+    <div id="modal-inv" class="modal hidden">
+        <div class="modal-header">Инвентарь <button class="close-btn" onclick="Game.ui.closeAllModals()">×</button></div>
+        <div class="modal-body">
+            <ul id="inventory-list" class="inv-grid"></ul>
+        </div>
+    </div>
+
+    <div id="modal-rep" class="modal hidden">
+        <div class="modal-header">Репутация <button class="close-btn" onclick="Game.ui.closeAllModals()">×</button></div>
+        <div class="modal-body">
+            <ul id="factions-list"></ul>
+        </div>
+    </div>
+
+    <div id="modal-sys" class="modal hidden">
+        <div class="modal-header">Меню <button class="close-btn" onclick="Game.ui.closeAllModals()">×</button></div>
+        <div class="modal-body">
+            <button class="menu-btn danger" onclick="Game.resetGame()">Сбросить прогресс</button>
+            <p style="text-align:center; font-size:0.8em; margin-top:10px; color:#555;">Версия 0.4.1</p>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
     <script src="js/engine.js"></script>
-    
     <script src="js/chapters/prologue.js"></script>
     <script src="js/chapters/chapter1.js"></script>
     
-    <script>
-        window.onload = function() {
-            Game.init();
-        };
-    </script>
+    <script>window.onload = () => Game.init();</script>
 </body>
 </html>
