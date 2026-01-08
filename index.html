@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Text Adventure</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="game-container">
+        <aside class="sidebar left-sidebar">
+            <div class="panel-header">Герой</div>
+            <div id="char-info">
+                <p>Имя: <span id="char-name">Неизвестный</span></p>
+                <p>Класс: <span id="char-class">Нет</span></p>
+                <p>Уровень: <span id="char-lvl">1</span></p>
+                <div class="health-bar-container">
+                    HP: <div class="health-bar"><div id="hp-fill" style="width: 100%;"></div></div>
+                </div>
+            </div>
+            
+            <div class="panel-header">Характеристики</div>
+            <ul id="stats-list">
+                </ul>
+
+            <div class="panel-header">Состояние</div>
+            <ul id="status-effects">
+                </ul>
+        </aside>
+
+        <main class="main-content">
+            <div id="story-log">
+                </div>
+            
+            <div id="current-scene" class="typing-effect">
+                </div>
+
+            <div id="choices-container">
+                </div>
+        </main>
+
+        <aside class="sidebar right-sidebar">
+            <div class="panel-header">Инвентарь</div>
+            <ul id="inventory-list">
+                <li class="empty-msg">Пусто</li>
+            </ul>
+
+            <div class="panel-header">Отношения</div>
+            <ul id="factions-list">
+                </ul>
+
+            <div class="system-controls">
+                <button onclick="Game.saveProgress()">Сохранить</button>
+                <button onclick="Game.resetGame()" class="danger-btn">Сброс</button>
+            </div>
+        </aside>
+    </div>
+
+    <script src="script.js"></script>
+    </body>
+</html>
