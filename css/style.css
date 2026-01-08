@@ -1,200 +1,190 @@
 :root {
     --bg-color: #121212;
-    --panel-bg: #1e1e1e;
+    --card-bg: #1e1e1e;
     --text-color: #e0e0e0;
-    --accent-color: #9b59b6; /* Мистический фиолетовый */
-    --accent-hover: #8e44ad;
-    --border-color: #333;
-    --success-color: #27ae60;
-    --fail-color: #c0392b;
+    --accent: #9b59b6; 
+    --hp-color: #c0392b;
+    --exp-color: #f39c12;
+    --border: #333;
     --font-main: 'Verdana', sans-serif;
     --font-serif: 'Georgia', serif;
 }
 
-/* Базовые настройки и блокировка зума */
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-main);
     margin: 0;
     height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    touch-action: manipulation;
+}
+
+/* --- ВЕРХНИЙ БАР --- */
+.top-bar {
+    background: #000;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--accent);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.char-summary { font-weight: bold; font-size: 1.1em; }
+.lvl-badge { background: #333; font-size: 0.7em; padding: 2px 6px; border-radius: 4px; color: var(--exp-color); margin-left: 5px; }
+
+.bars-container { width: 40%; display: flex; flex-direction: column; gap: 4px; }
+.bar-wrap { position: relative; background: #333; height: 12px; border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; width: 100%; transition: width 0.5s; }
+.hp-wrap .bar-fill { background: var(--hp-color); }
+.exp-wrap .bar-fill { background: var(--exp-color); }
+.bar-text { position: absolute; left: 5px; top: 0; font-size: 8px; line-height: 12px; color: #fff; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+
+/* --- ОСНОВНАЯ ОБЛАСТЬ --- */
+.game-container {
+    flex-grow: 1;
     display: flex;
     justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    touch-action: manipulation;
-    user-select: none; /* Защита от выделения текста */
-}
-
-/* СЕТКА ИНТЕРФЕЙСА */
-.game-container {
-    display: grid;
-    grid-template-columns: 260px 1fr 260px;
-    width: 98%;
-    height: 96vh;
-    gap: 15px;
-    background: #181818;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 0 30px rgba(0,0,0,0.8);
-}
-
-/* ПАНЕЛИ */
-.sidebar {
-    background: var(--panel-bg);
-    padding: 15px;
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-
-.panel-header {
-    font-family: var(--font-serif);
-    font-size: 1.1em;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--accent-color);
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    text-align: center;
-}
-
-/* ГЕРОЙ */
-#char-info { margin-bottom: 20px; text-align: center; }
-.char-header { margin-bottom: 10px; }
-#char-name { font-size: 1.2em; font-weight: bold; color: #fff; display: block;}
-.subtitle { font-size: 0.8em; color: #aaa; }
-
-.health-bar { background: #333; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 5px;}
-#hp-fill { background: #c0392b; height: 100%; width: 100%; transition: width 0.5s ease; }
-
-#stats-list { list-style: none; padding: 0; }
-#stats-list li { padding: 5px 0; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; }
-
-/* ЦЕНТРАЛЬНАЯ ЧАСТЬ */
-.main-content {
-    background: #151515;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    border-left: 1px solid var(--border-color);
-    border-right: 1px solid var(--border-color);
     position: relative;
+    overflow: hidden;
+    background: url('https://www.transparenttextures.com/patterns/dark-matter.png'), #161616;
 }
 
-#story-log {
-    flex-grow: 1;
+.main-content {
+    width: 100%;
+    max-width: 800px; /* Ограничение ширины на ПК */
+    padding: 20px;
+    padding-bottom: 80px; /* Отступ под меню */
     overflow-y: auto;
-    margin-bottom: 20px;
-    padding-right: 10px;
-    font-family: var(--font-serif);
-    color: #777;
-    font-size: 0.95em;
-    mask-image: linear-gradient(to bottom, transparent, black 10%); /* Эффект затухания сверху */
+    display: flex;
+    flex-direction: column;
 }
 
-.log-entry { margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 10px; }
+/* Лог и Текст */
+#story-log { 
+    color: #666; 
+    font-style: italic; 
+    margin-bottom: 20px; 
+    font-size: 0.9em;
+    mask-image: linear-gradient(to bottom, transparent, black 20%);
+}
 
 #current-scene {
-    min-height: 120px;
-    font-size: 1.15em;
-    line-height: 1.6;
-    color: #fff;
-    margin-bottom: 20px;
-    white-space: pre-line;
     font-family: var(--font-serif);
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    white-space: pre-line;
+    color: #fff;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
-/* Анимация курсора */
-.typing-cursor::after {
-    content: '▋';
-    display: inline-block;
-    vertical-align: baseline;
-    animation: blink 1s infinite;
-    color: var(--accent-color);
-    margin-left: 4px;
-    font-size: 0.8em;
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-/* КНОПКИ */
-#choices-container { display: flex; flex-direction: column; gap: 10px; }
-
+/* Кнопки действий */
+#choices-container { display: grid; gap: 12px; }
 button {
-    background: #252525;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     color: #ddd;
-    border: 1px solid #444;
-    padding: 15px;
+    padding: 16px;
     font-size: 1em;
+    border-radius: 8px;
     text-align: left;
     cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 4px;
-    user-select: none;
+    transition: 0.2s;
+}
+button:hover { border-color: var(--accent); color: #fff; background: #2a2a2a; }
+button:active { transform: scale(0.98); }
+button:disabled { opacity: 0.5; filter: grayscale(1); }
+
+/* --- НИЖНЕЕ МЕНЮ --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 70px;
+    background: #000;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 20;
 }
 
-button:hover { background: #333; border-color: var(--accent-color); color: #fff; transform: translateX(5px); }
-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-button.danger-btn { margin-top: auto; background: #300; border-color: #500; text-align: center; }
+.bottom-nav button {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    width: 25%;
+    text-align: center;
+}
+.bottom-nav button:hover { color: var(--accent); background: transparent; }
 
-/* ИНВЕНТАРЬ */
-#inventory-list { list-style: none; padding: 0; }
-#inventory-list li { 
-    background: #222; margin-bottom: 5px; padding: 8px; border-radius: 3px; border: 1px solid #333; font-size: 0.9em;
+/* --- МОДАЛЬНЫЕ ОКНА --- */
+.hidden { display: none !important; }
+
+#modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(3px);
+    z-index: 50;
+    animation: fadeIn 0.2s;
 }
 
-/* --- МОБИЛЬНАЯ АДАПТАЦИЯ --- */
-@media (max-width: 768px) {
-    .game-container {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        height: 100vh;
-        gap: 0;
-        border: none;
-    }
-
-    /* Верх: Герой (компактно) */
-    .left-sidebar {
-        flex-basis: auto;
-        padding: 10px;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid var(--accent-color);
-        background: #111;
-        z-index: 10;
-    }
-    .left-sidebar .panel-header, #status-effects { display: none; }
-    #stats-list { display: none; } /* Скрываем статы на мобилке, чтобы не занимали место */
-    #char-info { margin: 0; text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between; }
-    .health-bar-container { width: 100px; }
-
-    /* Центр: Сюжет */
-    .main-content {
-        flex-grow: 1;
-        padding: 15px;
-        border: none;
-    }
-    #story-log { display: none; } /* На мобилке скрываем лог, оставляем только актуальное */
-    #current-scene { font-size: 1em; }
-
-    /* Низ: Инвентарь и Кнопки */
-    .right-sidebar {
-        flex-basis: 35%; /* Отдаем 35% экрана под инвентарь и кнопки */
-        border-top: 2px solid var(--accent-color);
-        padding: 10px;
-    }
-    
-    #inventory-list {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 5px;
-        max-height: 100px;
-        overflow-y: auto;
-    }
-    
-    .system-controls { margin-top: 10px; }
-    button { padding: 12px; font-size: 0.95em; }
+.modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    background: #1c1c1c;
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
+
+.modal-header {
+    padding: 15px;
+    background: #111;
+    border-bottom: 1px solid #333;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 12px 12px 0 0;
+}
+
+.close-btn { background: none; border: none; font-size: 1.5em; padding: 0 10px; color: #fff; }
+.modal-body { padding: 20px; overflow-y: auto; }
+
+/* Стили внутри модалок */
+.stats-grid li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #333; }
+.inv-grid { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr; gap: 8px; }
+.inv-grid li { background: #252525; padding: 10px; border-radius: 5px; border: 1px solid #333; }
+.menu-btn.danger { background: #522; border-color: #822; text-align: center; }
+
+/* --- УВЕДОМЛЕНИЯ (Toast) --- */
+#toast-container { position: fixed; top: 70px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: rgba(0,0,0,0.9); border-left: 4px solid var(--accent); color: #fff; padding: 15px; border-radius: 4px; animation: slideIn 0.3s; min-width: 200px; }
+
+/* Анимации */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { transform: translate(-50%, -40%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.typing-cursor::after { content: '▋'; animation: blink 1s infinite; color: var(--accent); margin-left: 4px; }
+@keyframes blink { 50% { opacity: 0; } }
