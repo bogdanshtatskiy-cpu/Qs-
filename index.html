@@ -2,71 +2,56 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Пепел Богов: Начало</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эпоха Раскола</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <nav class="mobile-nav">
-        <button onclick="UI.switchTab('story')" class="active-tab">Сюжет</button>
-        <button onclick="UI.switchTab('hero')">Герой</button>
-        <button onclick="UI.switchTab('inv')">Рюкзак</button>
-    </nav>
-
     <div class="game-container">
-        <aside class="sidebar left-sidebar" id="tab-hero">
-            <div class="panel-header">Досье</div>
+        <aside class="sidebar left-sidebar">
+            <div class="panel-header">Герой</div>
             <div id="char-info">
-                <p>Имя: <span id="char-name" class="highlight">---</span></p>
+                <p>Имя: <span id="char-name">...</span></p>
                 <p>Класс: <span id="char-class">Нет</span></p>
-                <div class="stat-row">HP: <div class="bar-bg"><div id="hp-fill" style="width: 100%;"></div></div> <span id="hp-val">100/100</span></div>
-                <div class="stat-row">Безумие: <div class="bar-bg"><div id="sanity-fill" style="width: 0%; background: #a020f0;"></div></div></div>
+                <div class="health-bar-container">
+                    HP: <div class="health-bar"><div id="hp-fill"></div></div>
+                </div>
             </div>
             
             <div class="panel-header">Характеристики</div>
             <ul id="stats-list"></ul>
-
-            <div class="panel-header">Состояние</div>
-            <ul id="status-effects"></ul>
         </aside>
 
-        <main class="main-content" id="tab-story">
+        <main class="main-content">
             <div id="story-log"></div>
             
-            <div class="scene-area">
-                <div id="current-scene" class="typing-effect"></div>
-                <div id="choices-container"></div>
-            </div>
+            <div id="current-scene"></div>
+
+            <div id="choices-container"></div>
         </main>
 
-        <aside class="sidebar right-sidebar" id="tab-inv">
-            <div class="panel-header">Барахло</div>
-            <ul id="inventory-list"><li class="empty-msg">Пусто</li></ul>
+        <aside class="sidebar right-sidebar">
+            <div class="panel-header">Инвентарь</div>
+            <ul id="inventory-list"></ul>
 
             <div class="panel-header">Фракции</div>
             <ul id="factions-list"></ul>
 
-            <div class="system-controls">
-                <button onclick="Game.saveProgress()">Запомнить</button>
-                <button onclick="Game.resetGame()" class="danger-btn">Сдохнуть (Сброс)</button>
+            <div class="system-controls" style="margin-top: auto;">
+                <button onclick="Game.resetGame()" style="background:#522; width:100%; padding: 10px;">Сброс игры</button>
             </div>
         </aside>
     </div>
 
-    <div id="start-modal" class="modal">
-        <div class="modal-content">
-            <h2>КТО ТЫ ТАКОЙ?</h2>
-            <input type="text" id="input-name" placeholder="Введи имя, ублюдок..." maxlength="15">
-            <div class="class-selection">
-                <h3>Выбери судьбу:</h3>
-                <div id="class-buttons"></div>
-            </div>
-            <button id="start-btn" disabled onclick="Game.startGame()">ПРОСНУТЬСЯ</button>
-        </div>
-    </div>
-
     <script src="js/engine.js"></script>
-    <script src="js/chapter1.js"></script> 
+    
+    <script src="js/chapters/prologue.js"></script>
+
+    <script>
+        window.onload = function() {
+            Game.init();
+        };
+    </script>
 </body>
 </html>
