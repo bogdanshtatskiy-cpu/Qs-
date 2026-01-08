@@ -12,25 +12,32 @@ const Game = {
         },
         story: {
             chapter: "prologue",
-            sceneId: "intro_01", // Стартовая точка должна совпадать с первой сценой в файле главы
+            sceneId: "intro_01", 
             history: []
         },
         flags: {}
     },
 
-    // Сюда будут подгружаться сцены из других файлов
     scenes: {},
+
+    // Словарь для перевода
+    loc: {
+        stats: {
+            strength: "Сила",
+            agility: "Ловкость",
+            intellect: "Интеллект",
+            charisma: "Харизма"
+        }
+    },
 
     // --- ИНИЦИАЛИЗАЦИЯ ---
     init: function() {
         this.loadProgress();
         this.updateUI();
-        // Проверяем, существует ли сцена
         if (this.scenes[this.state.story.sceneId]) {
             this.renderScene(this.state.story.sceneId);
         } else {
-            console.error("Ошибка: Сцена " + this.state.story.sceneId + " не найдена. Проверьте prologue.js");
-            document.getElementById("current-scene").innerText = "Ошибка загрузки сюжета...";
+            document.getElementById("current-scene").innerText = "Ошибка: сцена не найдена.";
         }
     },
 
@@ -43,12 +50,14 @@ const Game = {
         const choicesDiv = document.getElementById("choices-container");
         const log = document.getElementById("story-log");
 
-        // Лог истории
+        // Логирование (только на ПК, на мобильном можно скрыть старое, если мешает, но пока оставим)
         if (this.state.story.sceneId !== sceneId && output.innerText) {
             const entry = document.createElement("div");
             entry.innerHTML = output.innerHTML;
-            entry.style.marginBottom = "20px";
-            entry.style.opacity = "0.6";
+            entry.style.marginBottom = "15px";
+            entry.style.opacity = "0.7";
+            entry.style.borderBottom = "1px solid #333";
+            entry.style.paddingBottom = "10px";
             log.appendChild(entry);
             log.scrollTop = log.scrollHeight;
         }
@@ -56,18 +65,13 @@ const Game = {
         this.state.story.sceneId = sceneId;
         this.saveProgress();
 
-        // Действия (получение предметов и т.д.)
         if (scene.actions) {
             scene.actions.forEach(act => this.executeAction(act));
-            // Важно: не удаляем actions, чтобы при перезагрузке страницы логика была консистентной, 
-            // но в идеале для одноразовых действий нужны флаги. Пока оставим так.
         }
 
-        // Вывод текста
         let formattedText = scene.text.replace(/{name}/g, this.state.hero.name);
         output.innerHTML = formattedText;
 
-        // Генерация кнопок
         choicesDiv.innerHTML = "";
 
         if (scene.type === "input") {
@@ -81,12 +85,13 @@ const Game = {
         const input = document.createElement("input");
         input.id = "player-input";
         input.placeholder = "Введите имя...";
-        input.style.padding = "10px";
-        input.style.width = "70%";
-        input.style.marginRight = "10px";
-
+        
         const btn = document.createElement("button");
         btn.innerText = "Принять";
+        // На мобилках кнопка ввода должна быть удобной
+        btn.style.width = "auto"; 
+        btn.style.display = "inline-block";
+        
         btn.onclick = () => {
             const val = input.value.trim();
             if (val) {
@@ -108,30 +113,29 @@ const Game = {
             let label = choice.text;
             let allowed = true;
 
-            // Проверка требований
             if (choice.req) {
+                // Перевод названия стата для кнопки
+                const statNameRu = this.loc.stats[choice.req.stat] || choice.req.stat;
                 const statVal = this.state.hero.stats[choice.req.stat] || 0;
+                
                 if (statVal < choice.req.val) {
                     allowed = false;
-                    label += ` [Треб: ${choice.req.stat} ${choice.req.val}]`;
-                    btn.style.opacity = "0.5";
+                    label += ` [Треб: ${statNameRu} ${choice.req.val}]`;
+                    btn.style.opacity = "0.6";
+                    btn.style.border = "1px solid #522";
                 } else {
-                    label += ` [${choice.req.stat} ✓]`;
-                    btn.style.borderColor = "#4f4";
+                    label += ` [${statNameRu} ✓]`;
+                    btn.style.borderColor = "#27ae60";
                 }
             }
 
             btn.innerText = label;
-            btn.style.width = "100%";
-            btn.style.marginBottom = "10px";
 
             if (!allowed && !choice.fallback) {
                 btn.disabled = true;
             } else {
                 btn.onclick = () => {
-                    if (choice.effect) {
-                        this.applyEffect(choice.effect);
-                    }
+                    if (choice.effect) this.applyEffect(choice.effect);
                     const nextScene = (!allowed && choice.fallback) ? choice.fallback : choice.next;
                     this.renderScene(nextScene);
                 };
@@ -140,11 +144,8 @@ const Game = {
         });
     },
 
-    // --- ЛОГИКА ---
     executeAction: function(act) {
         if (act.type === "addItem") {
-            // Простая проверка, чтобы не добавлять предмет бесконечно при обновлении страницы
-            // В будущем сделаем систему уникальных ID предметов
             if(!this.state.hero.inventory.includes(act.item)){
                 this.state.hero.inventory.push(act.item);
                 this.updateUI();
@@ -166,17 +167,28 @@ const Game = {
 
     updateUI: function() {
         document.getElementById("char-name").innerText = this.state.hero.name;
+        document.getElementById("char-class").innerText = this.state.hero.class;
         document.getElementById("hp-fill").style.width = (this.state.hero.hp / this.state.hero.maxHp * 100) + "%";
         
         const sList = document.getElementById("stats-list");
         sList.innerHTML = "";
-        for (let [k, v] of Object.entries(this.state.hero.stats)) {
-            sList.innerHTML += `<li>${k}: ${v}</li>`;
+        
+        // Перебор статов с переводом на русский
+        for (let [key, val] of Object.entries(this.state.hero.stats)) {
+            const ruName = this.loc.stats[key] || key;
+            // Компактный вид для списка: "Сила: 5"
+            let li = document.createElement("li");
+            li.innerHTML = `<b>${ruName}</b>: ${val}`;
+            sList.appendChild(li);
         }
 
         const iList = document.getElementById("inventory-list");
         iList.innerHTML = "";
-        this.state.hero.inventory.forEach(i => iList.innerHTML += `<li>${i}</li>`);
+        if(this.state.hero.inventory.length === 0) {
+             iList.innerHTML = "<li style='opacity:0.5'>Пусто</li>";
+        } else {
+             this.state.hero.inventory.forEach(i => iList.innerHTML += `<li>${i}</li>`);
+        }
         
         const fList = document.getElementById("factions-list");
         fList.innerHTML = "";
